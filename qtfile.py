@@ -29,7 +29,6 @@ class Atom:
 	trailing_null = False
 
 	def __init__(self, size=0, kind=""):
-		# As opposed to the Quicktime standard, this is the size EXCLUDING the header.
 		self.size = size
 		self.kind = kind
 		self.parent = None
@@ -162,10 +161,17 @@ class Atom:
 
 	def write_data(self, stream):
 		"""Write the atom data to the stream. As the basic Atom class does not
-		understand the content of atoms, it simply passes through the data."""
-		LOG.debug("@%d: Writing data for %s" % (stream.tell(), self.kind))
-		self.source.seek(self.source_offset + self.source_header_size)
-		stream.write(self.source.read(self.size - self.source_header_size))
+		understand the content of atoms, it simply passes through the data if no
+		fields are defined."""
+		# FIXME: We should check that we've written enough data.
+		if self.field_defs:
+			LOG.debug("@%d: Serializing data for %s" % (stream.tell(), self.kind))
+			for key, format in self.field_defs:
+				stream.write(struct.pack(format, self.fields[key]))
+		else:
+			LOG.debug("@%d: Passing through data for %s" % (stream.tell(), self.kind))
+			self.source.seek(self.source_offset + self.source_header_size)
+			stream.write(self.source.read(self.size - self.source_header_size))
 
 
 class ContainerAtom(Atom):
@@ -180,6 +186,19 @@ class ContainerAtom(Atom):
 	    'schi', 'sinf', 'stbl', 'stik', 'tmpo', '\xa9too', 'traf', 'trak', 'trkn',
 	    'udta', '\xa9wrt',
 	]
+
+	# FIXME: This should probably recalculate the size before writing the header.
+
+	def write_data(self, stream):
+		for key, format in self.field_defs:
+			stream.write(struct.pack(format, self.fields[key]))
+
+		for child in self.children:
+			LOG.debug("@%d: Writing child %s" % (stream.tell(), child))
+			child.write(stream)
+		if self.trailing_null:
+			LOG.debug("@%d: Writing trailing null after %s" % (stream.tell(), self))
+			stream.write('\x00'*4)
 
 
 def read_struct(stream, format, unwrap=True):
