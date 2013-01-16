@@ -144,10 +144,11 @@ class Atom:
 	def read_children(self, stream, end, type_handlers):
 		self.children = Atom.from_stream(stream, stream.tell(), end, self, type_handlers)
 
-	def write(self, stream):
-		"""Write the atom to the stream."""
+	def write(self, stream, recursive=True):
+		"""Write the atom to the stream. If recursive is set to False, containers
+		will not output their children."""
 		self.write_header(stream)
-		self.write_data(stream)
+		self.write_data(stream, recursive)
 
 	def write_header(self, stream):
 		"""Write an atom header to the stream."""
@@ -159,7 +160,7 @@ class Atom:
 			LOG.debug("@%d: Writing basic header for %s" % (stream.tell(), self.kind))
 			stream.write(struct.pack(self.header, self.size, self.kind))
 
-	def write_data(self, stream):
+	def write_data(self, stream, recursive=True):
 		"""Write the atom data to the stream. As the basic Atom class does not
 		understand the content of atoms, it simply passes through the data if no
 		fields are defined."""
@@ -187,18 +188,20 @@ class ContainerAtom(Atom):
 	    'udta', '\xa9wrt',
 	]
 
-	# FIXME: This should probably recalculate the size before writing the header.
+	# FIXME: This should probably recalculate the size before writing the header. It's
+	# the sum of the serialized size of the fields plus size of each containing atom.
 
-	def write_data(self, stream):
+	def write_data(self, stream, recursive=True):
 		for key, format in self.field_defs:
 			stream.write(struct.pack(format, self.fields[key]))
 
-		for child in self.children:
-			LOG.debug("@%d: Writing child %s" % (stream.tell(), child))
-			child.write(stream)
-		if self.trailing_null:
-			LOG.debug("@%d: Writing trailing null after %s" % (stream.tell(), self))
-			stream.write('\x00'*4)
+		if recursive:
+			for child in self.children:
+				LOG.debug("@%d: Writing child %s" % (stream.tell(), child))
+				child.write(stream)
+			if self.trailing_null:
+				LOG.debug("@%d: Writing trailing null after %s" % (stream.tell(), self))
+				stream.write('\x00'*4)
 
 
 def read_struct(stream, format, unwrap=True):
