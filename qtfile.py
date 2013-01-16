@@ -102,13 +102,13 @@ class Atom:
 			if end == -1:
 				break
 
-			if parent and parent.trailing_null and (end - stream.tell() == 4):
-				LOG.debug("Trailing null inside container %s" % (parent))
-				stream.read(4)
-
 			if stream.tell() != (offset + atom.size):
 				LOG.debug("@%d: Atom %s did not completely parse, seeking ahead to %d" % (stream.tell(), kind, offset + atom.size))
 				stream.seek(offset + atom.size)
+
+			if parent and parent.trailing_null and (end - stream.tell() == 4):
+				LOG.debug("Trailing null inside container %s" % (parent))
+				stream.read(4)
 
 
 	@classmethod
