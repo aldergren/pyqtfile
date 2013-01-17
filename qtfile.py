@@ -3,6 +3,7 @@
 
 import logging
 import struct
+import os
 
 
 LOG = logging.getLogger("qtfile")
@@ -12,6 +13,10 @@ class QuickTimeReader:
 
 	def __init__(self):
 		self.type_handlers = [ContainerAtom]
+
+	def open(self, path):
+		f = open(path, 'rb')
+		return self.read(f, os.path.getsize(path))
 
 	def read(self, stream, size):
 		return Atom.from_stream(stream, stream.tell(), size, None, self.type_handlers)
