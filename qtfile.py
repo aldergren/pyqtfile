@@ -5,7 +5,7 @@ import logging
 import struct
 
 
-LOG = logging.getLogger("qtfile.atom")
+LOG = logging.getLogger("qtfile")
 
 
 class QuickTimeReader:
@@ -106,7 +106,7 @@ class Atom:
 				stream.seek(offset + atom.size)
 
 			if parent and parent.trailing_null and (end - stream.tell() == 4):
-				LOG.debug("Trailing null inside container %s" % (parent))
+				LOG.debug("@%d: Trailing null inside container %s" % (stream.tell(), parent))
 				stream.read(4)
 
 
