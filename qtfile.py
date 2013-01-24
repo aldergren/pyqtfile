@@ -309,11 +309,18 @@ class Atom(list):
 		self.kind = "free"
 
 	def __getitem__(self, key):
-		"""Provides dict-like getters for atom fields."""
-		return self.fields[key]
+		"""Provides list and dict-like getters for atoms."""
+		if isinstance(key, int):
+			return super(Atom, self).__getitem__(key)
+		else:
+			return self.fields[key]
 
 	def __setitem__(self, key, value):
-		"""Provides dict-like setters for atom fields."""
+		"""Provides list and dict-like setters for atoms."""
+		if isinstance(key, int):
+			return super(Atom, self).__setitem__(key, value)
+		else:
+			return self.fields[key]
 		self.fields[key] = value
 
 
