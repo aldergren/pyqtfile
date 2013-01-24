@@ -333,6 +333,9 @@ class Atom(list):
 	def items(self):
 		return self.fields.items()
 
+	def has_key(self, key):
+		return self.fields.has_key(key)
+
 
 class PassthroughAtom(Atom):
 	"""A placeholder atom without knowledge of the actual data structure,
