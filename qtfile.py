@@ -102,6 +102,8 @@ class QuickTimeFile(list):
 		"""Find atoms of specific types in movie."""
 		matches = []
 		for atom in self:
+			if atom.kind in types:
+				matches.append(atom)
 			matches.extend(atom.find(types))
 		return matches
 
