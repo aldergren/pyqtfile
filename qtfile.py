@@ -20,8 +20,8 @@ Atoms provide list-like behaviour for their children, and dict-like behaviour
 for fields.
 
 Some atoms ("stco", etc) contain file offsets, so it may not be safe to remove
-atoms in a movie unless these are recalculated. A simpler route is to use free() 
-which replaces it with a "free" atom.
+or add atoms unless these offsets are recalculated. When removing atoms, a simpler
+route is use free().
 
 Usage
 -----
