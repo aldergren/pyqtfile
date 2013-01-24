@@ -15,6 +15,19 @@ When reading an existing movie and no atom class is found for a type, the
 PassthroughAtom class is used. This lazily passes through the source data,
 which allows manipulation of a movie with only partial understanding of the
 atoms it contains.
+
+Some atoms ("stco", etc) contain file offsets, so it may not be safe to remove
+atoms in a movie unless these are recalculated. A simpler route is to use free() 
+which replaces it with a "free" atom.
+
+Usage
+-----
+
+	>>> import qtfile
+	>>> import qtatoms
+	>>> for atom in qtfile.QuickTimeFile('mymovie.mov', atom_modules=[qtatoms]):
+	>>>		print atom, atom.fields
+
 """
 
 __author__ = "Niklas Aldergren <niklas@aldergren.com>"
@@ -75,7 +88,7 @@ class QuickTimeFile(list):
 		any file-like object that implements read(), tell() and seek()."""
 		for a in self:
 			self.remove(a)
-		for a in Atom.read(stream, stream.tell(), 0, None, self.atom_classes):
+		for a in Atom.read(stream, stream.tell(), 0, self, self.atom_classes):
 			self.append(a)
 
 	def write(self, stream):
@@ -202,7 +215,7 @@ class Atom(list):
 
 			# If we're the last item in a container with a terminating null, consume it.
 			# TODO: Document this properly. Why are we looking at the container?
-			if parent != None and parent.trailing_null and (end - stream.tell() == 4):
+			if parent != None and isinstance(parent, Atom) and parent.trailing_null and (end - stream.tell() == 4):
 				debug("Terminating null found", kind, stream)
 				parent.terminating_null = True
 				stream.read(4)
@@ -287,6 +300,11 @@ class Atom(list):
 				matches.extend(child.find(types, recursive=True))
 		return matches
 
+	def free(self):
+		"""Convert Atom to free."""
+		# FIXME: This should also zero all the fields.
+		self.kind = "free"
+
 
 class PassthroughAtom(Atom):
 	"""A placeholder atom without knowledge of the actual data structure,
@@ -308,7 +326,6 @@ class PassthroughAtom(Atom):
 
 	def __repr__(self):
 		return "<%s %s %sb>" % (self.__class__.__name__, self.kind, self.size)
-
 
 	@property
 	def size(self):
