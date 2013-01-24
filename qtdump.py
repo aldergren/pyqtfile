@@ -10,9 +10,9 @@ import qtfile
 import qtatoms
 
 
-USAGE = """Usage: %prog [options] <movies ...>
+USAGE = """Usage: %prog [options] <movie ...>
 
-Dump atom tree (including fields and values) from a QuickTime movie.
+Dump atom tree (including fields and values) from QuickTime movies.
 """
 
 
