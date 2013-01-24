@@ -191,3 +191,33 @@ class ColorParametersAtom(Atom):
 	 			  ("matrix", ">H"),
 	 			 ]
 
+class MetadataHandlerAtom(Atom):
+
+	supported_types = ["hdlr"]
+	reserved_format = ">4s"
+	reserved_count = 3
+
+	field_defs = [("version", ">c"),
+				  ("flags", ">3s"),
+				  ("predefined", ">I"),
+				  ("handler_type", ">4s")]
+
+	def read_data(self, stream, end = None):
+		"""Parse atom data."""
+		super(MetadataHandlerAtom, self).read_data(stream, end)
+		self.fields["reserved"] = []
+		for _ in range(self.reserved_count):
+			self.fields["reserved"].append(read_struct(stream, self.reserved_format))
+		self.fields["name"] = stream.read(end - stream.tell())
+
+	def write_data(self, stream, recursive):
+		super(MetadataHandlerAtom, self).write_data(stream, recursive)
+		for v in self.fields["reserved"]:
+			stream.write(struct.pack(self.reserved_format, v))
+		stream.write(self.fields["name"])
+
+	@property
+	def size(self):
+		return super(MetadataHandlerAtom, self).size + len(self.fields["name"]) + struct.calcsize(self.reserved_format) * self.reserved_count
+
+
