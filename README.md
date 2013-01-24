@@ -1,6 +1,8 @@
 PyQTFile
 ========
 
+Author: Niklas Aldergren <niklas@aldergren.com>
+
 A Python library for reading, modfying and writing QuickTime movies.
 
 A QuickTime movie consists of a list of atoms. An atom can contain other
