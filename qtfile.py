@@ -16,6 +16,9 @@ PassthroughAtom class is used. This lazily passes through the source data,
 which allows manipulation of a movie with only partial understanding of the
 atoms it contains.
 
+Atoms provide list-like behaviour for their children, and dict-like behaviour
+for fields.
+
 Some atoms ("stco", etc) contain file offsets, so it may not be safe to remove
 atoms in a movie unless these are recalculated. A simpler route is to use free() 
 which replaces it with a "free" atom.
@@ -304,6 +307,14 @@ class Atom(list):
 		"""Convert Atom to free."""
 		# FIXME: This should also zero all the fields.
 		self.kind = "free"
+
+	def __getitem__(self, key):
+		"""Provides dict-like getters for atom fields."""
+		return self.fields[key]
+
+	def __setitem__(self, key, value):
+		"""Provides dict-like setters for atom fields."""
+		self.fields[key] = value
 
 
 class PassthroughAtom(Atom):
