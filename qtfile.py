@@ -320,8 +320,7 @@ class Atom(list):
 		if isinstance(key, int):
 			return super(Atom, self).__setitem__(key, value)
 		else:
-			return self.fields[key]
-		self.fields[key] = value
+			self.fields[key] = value
 
 
 class PassthroughAtom(Atom):
