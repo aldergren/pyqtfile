@@ -310,19 +310,28 @@ class Atom(list):
 		# FIXME: This should also zero all the fields.
 		self.kind = "free"
 
+	# Implements some dict-like behaviour for atom fields.
+
 	def __getitem__(self, key):
-		"""Provides list and dict-like getters for atoms."""
 		if isinstance(key, int):
 			return super(Atom, self).__getitem__(key)
 		else:
 			return self.fields[key]
 
 	def __setitem__(self, key, value):
-		"""Provides list and dict-like setters for atoms."""
 		if isinstance(key, int):
 			return super(Atom, self).__setitem__(key, value)
 		else:
 			self.fields[key] = value
+
+	def keys(self):
+		return self.fields.keys()
+
+	def values(self):
+		return self.fields.values()
+
+	def items(self):
+		return self.fields.items()
 
 
 class PassthroughAtom(Atom):
