@@ -28,7 +28,7 @@ Usage
 Advanced Usage
 --------------
 
-Find all metadata key-value pairs ina movie:
+Find all metadata key-value pairs in a movie:
 
 
 	# Find all the metadata atoms.
