@@ -38,6 +38,7 @@ __author__ = "Niklas Aldergren <niklas@aldergren.com>"
 import logging
 import struct
 import os
+import string
 
 LOG = logging.getLogger("qtfile")
 
@@ -111,6 +112,8 @@ class QuickTimeFile(list):
 class Atom(list):
 	"""Basic unit of data in QuickTime movies."""
 
+	# This uses the name "kind" in place of "type", to avoid shadowing the built-in type().
+
 	header = ">L4s"
 	header_extsize = ">Q"
 	supported_types = []
@@ -131,8 +134,19 @@ class Atom(list):
 		# Indicates whether this atom should have a terminating null when serialized.
 		self.terminating_null = False
 
+	@property
+	def safe_kind(self):
+		"""Returns the atom type, in a safely printable format."""
+		safe = ""
+		for c in self.kind:
+			if c in string.printable:
+				safe += c
+			else:
+				safe += "?"
+		return safe
+
 	def __repr__(self):
-		return "<%s %s>" % (self.__class__.__name__, self.kind)
+		return "<%s %s>" % (self.__class__.__name__, self.safe_kind)
 
 	@property
 	def size(self):
@@ -154,7 +168,7 @@ class Atom(list):
 		return kind in cls.supported_types
 
 	@classmethod
-	def read(cls, stream, start=None, end=0, parent=None, atom_classes=None):
+	def read(cls, stream, start=None, end=0, parent=None, atom_classes=None, force_class=None):
 		"""Read atoms from stream.
 
 		The start parameter indicates the offset at which to start reading. End
@@ -178,21 +192,28 @@ class Atom(list):
 			try:
 				size, kind, extended = Atom.read_header(stream)
 
-				debug("Found header (%s bytes)" % size, kind, stream)
+				debug("Found header %s (%s bytes)" % ([c for c in kind], size), ">", stream)
 
-				for handler in atom_classes:
-					if handler.supports_type(kind):
-						atom = handler(kind)
-						atom.read_data(stream, offset + size)
 
-						if atom.container:
-							for child in Atom.read(stream, stream.tell(), offset + size, atom, atom_classes):
-								atom.append(child)
+				if force_class:
+					handler = force_class
+				else:
+					for c in atom_classes:
+						if c.supports_type(kind):
+							handler = c
+							break
 
-						if size != atom.size:
-							warning("Size mismatch [%s->%s], will not serialize correctly" % (size, atom.size), kind, stream)
+				if handler:
+					atom = handler(kind)
+					atom.read_data(stream, offset + size)
 
-						break
+					if atom.container:
+
+						for child in Atom.read(stream, stream.tell(), offset + size, atom, atom_classes, atom.force_child_class):
+							atom.append(child)
+
+					if size != atom.size:
+						warning("Size mismatch [%s->%s], will not serialize correctly" % (size, atom.size), atom.safe_kind, stream)
 
 				if atom == None:
 					atom = PassthroughAtom(kind, stream, offset, size)
@@ -200,7 +221,7 @@ class Atom(list):
 				atom.parent = parent
 				atom.extended_header = extended
 
-				debug("Instanced with %s" % atom.__class__.__name__, atom.kind, stream)
+				debug("Instanced with %s" % atom.__class__.__name__, atom.safe_kind, stream)
 
 			except QuickTimeEOF:
 				debug("End of file, stopped reading", "?", stream)
@@ -215,13 +236,13 @@ class Atom(list):
 			# This is to be expected with the passthrough atom as it's not actually reading anything.
 
 			if stream.tell() != (offset + size):
-				debug("Partial read, seeking ahead to %d" % (offset + size), kind, stream)
+				debug("Partial read, seeking ahead to %d" % (offset + size), atom.safe_kind, stream)
 				stream.seek(offset + size)
 
 			# If we're the last item in a container with a terminating null, consume it.
 			# TODO: Document this properly. Why are we looking at the container?
 			if parent != None and isinstance(parent, Atom) and parent.trailing_null and (end - stream.tell() == 4):
-				debug("Terminating null found", kind, stream)
+				debug("Terminating null found", atom.safe_kind, stream)
 				parent.terminating_null = True
 				stream.read(4)
 
@@ -239,7 +260,7 @@ class Atom(list):
 		size, kind = read_struct(stream, self.header)
 		extended_header = False
 
-		if not kind or kind.startswith('\x00'):
+		if not kind:
 			raise QuickTimeParseError("Atom with null type", stream.tell())
 
 		if size == 1:
