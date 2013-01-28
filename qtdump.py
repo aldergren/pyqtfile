@@ -41,7 +41,7 @@ def main(argv):
 			print indent + "%s" % (atom)
 			if opts.fields:
 				for key, value in atom.fields.items():
-					if isinstance(value, str):
+					if isinstance(value, str) or isinstance(value, unicode):
 						print indent + " | %s='%s'" % (key, value)
 					else:
 						print indent + " | %s=%s" % (key, value)
