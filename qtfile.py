@@ -81,7 +81,8 @@ class QuickTimeFile(list):
 			# We don't want to register the base Atom class as a handler.
 			return (inspect.isclass(cls) and
 				    issubclass(cls, Atom) and
-				    cls is not Atom)
+				    cls is not Atom and
+				    cls.explicit_registration == False)
 
 		for _, cls in inspect.getmembers(module, is_handler_class):
 			self.register_class(cls)
@@ -122,6 +123,12 @@ class Atom(list):
 
 	# Set to True to allow a trailing null at the end of the atom (used by some containers).
 	trailing_null = False
+
+	# Force all immediate children of this atom to be handled by a specific class.
+	force_child_class = None
+
+	# Set to True to hide this class from register_module().
+	explicit_registration = False
 
 	def __init__(self, kind=""):
 		"""Initialize Atom with a type."""
