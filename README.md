@@ -28,12 +28,26 @@ Usage
 Advanced Usage
 --------------
 
+Find all metadata key-value pairs ina movie:
+
+
+	# Find all the metadata atoms.
+	for meta in qt.find("meta"):
+		# Grab the atom containing all the metadata keys.
+		keys = meta.find("keys")[0]
+
+		# Loop through the all the keys, using the helper method to get the value.
+		for namespace, key in keys["keys"]:
+			print namespace, key, "=", keys.find_metadata_value(namespace, key)
+
+
 Find any color parameters in a movie, and modify the field values:
 
 	for colr in qt.find("colr"):
 		colr["primaries"] = 2
 		colr["transfer_func"] = 2
 		colr["matrix"] = 2
+
 
 Find the compressor used for each video track:
 

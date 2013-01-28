@@ -262,6 +262,14 @@ class MetadataKeysAtom(Atom):
 		return super(MetadataKeysAtom, self).size + \
 			sum([struct.calcsize(self.key_header_format) + len(v[1]) for v in self.fields["keys"]])
 
+	def find_metadata_value(self, namespace, key):
+		"""Find the value for a metadata key in the related atom structure."""
+		index = self.fields["keys"].index((namespace, key))
+		for ilst in self.parent.find("ilst"):
+			for data in ilst[index].find("data"):
+				return data["value"]
+		return None
+
 
 class MetadataItemAtom(ContainerAtom):
 

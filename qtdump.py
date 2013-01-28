@@ -45,10 +45,9 @@ def main(argv):
 			print meta.parent
 			print indent + str(meta)
 
-			for n, item in enumerate(keys['keys']):
-				namespace, key = item
-				data = values[n].find('data')[0]
-				print "%s%s:%s=%s" % (indent * 2, namespace, key, data["value"])
+			for namespace, key in keys['keys']:
+				print "%s%s:%s=%s" % (indent * 2, namespace, key, keys.find_metadata_value(namespace, key))
+
 
 	def dump_atoms(atoms, level=0):
 		indent = " "*4*level
@@ -63,6 +62,7 @@ def main(argv):
 						print indent + " | %s=%s" % (key, value)
 
 			dump_atoms(atom, level+1)
+
 
 	for qt_path in args[1:]:
 		print "[%s]" % (qt_path)
